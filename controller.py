@@ -4,8 +4,6 @@ import tkFileDialog
 from tkinter import *
 from tooltip import *
 from config import *
-from my_server import ServerSettingWindow
-from my_client import ClientSettingWindow
 from ttk import Combobox
 from PIL import ImageGrab
 import tkColorChooser
@@ -101,16 +99,6 @@ class ControlFrame(Frame):
         save_btn = Button(tools_btn_frame, image=self.save_img, command=self.save)
         save_btn.grid(row=4, column=1, pady=6)
         self.create_tooltip(save_btn, "save")
-
-        self.broadcast_img = PhotoImage(file="image\\broadcast.gif")
-        broadcast_btn = Button(tools_btn_frame, image=self.broadcast_img, command=self.server_setting)
-        broadcast_btn.grid(row=5, column=0)
-        self.create_tooltip(broadcast_btn, "new connection", "left")
-
-        self.connect_img = PhotoImage(file="image\\connection.gif")
-        connect_btn = Button(tools_btn_frame, image=self.connect_img, command=self.connection_setting)
-        connect_btn.grid(row=5, column=1)
-        self.create_tooltip(connect_btn, "connect")
 
         # colors setting
         color_frame = LabelFrame(self, text="Colors")
@@ -235,12 +223,6 @@ class ControlFrame(Frame):
             x2 = x1 + self.canvas.winfo_width()
             y2 = y1 + self.canvas.winfo_height()
             ImageGrab.grab().crop((x1, y1, x2, y2)).save(directory)
-
-    def server_setting(self):
-        ServerSettingWindow(self)
-
-    def connection_setting(self):
-        ClientSettingWindow(self)
 
 
 # frame for containing tool settings
