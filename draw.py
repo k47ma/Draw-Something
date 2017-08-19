@@ -2,6 +2,7 @@ from tkinter import *
 from canvas import *
 from controller import *
 from my_client import *
+from chatting import *
 import tkMessageBox
 
 # module for draw something game interface
@@ -29,6 +30,9 @@ class Game(Tk):
 
         self.game_frame = Frame(self)
         self.game_frame.grid(row=0, column=0, sticky=NSEW)
+
+        self.chatting = ChattingFrame(self.game_frame)
+        self.chatting.pack(side=RIGHT, fill=Y)
 
         self.canvas = PaintCanvas(self.game_frame)
         self.canvas.pack(side=RIGHT, fill=BOTH, expand=True)

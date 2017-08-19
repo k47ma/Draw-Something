@@ -86,6 +86,7 @@ class ClientSettingFrame(Frame):
 
         self.parent.game_frame.lift()
         self.parent.wm_geometry("900x680")
+        self.parent.controller.set_state(False)
 
 
 # thread for new client connection

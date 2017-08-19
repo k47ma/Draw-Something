@@ -95,11 +95,6 @@ class ControlFrame(Frame):
         revert_btn.grid(row=4, column=0, pady=6)
         self.create_tooltip(revert_btn, "revert")
 
-        self.save_img = PhotoImage(file="image\\save.gif")
-        save_btn = Button(tools_btn_frame, image=self.save_img, command=self.save)
-        save_btn.grid(row=4, column=1, pady=6)
-        self.create_tooltip(save_btn, "save")
-
         # colors setting
         color_frame = LabelFrame(self, text="Colors")
         color_frame.pack(side=TOP, fill=BOTH, pady=(6, 0), ipady=5)
@@ -157,9 +152,6 @@ class ControlFrame(Frame):
         # settings for specific tool
         self.setting_frame = SettingFrame(self)
         self.setting_frame.pack(side=TOP, fill=BOTH, expand=True, ipady=6, pady=6)
-
-        self.select("pencil")
-        self.setting_frame.show("pencil")
 
     def printMousePosition(self, event):
         self.position["text"] = "(%d, %d)" % (event.x, event.y)
@@ -223,6 +215,14 @@ class ControlFrame(Frame):
             x2 = x1 + self.canvas.winfo_width()
             y2 = y1 + self.canvas.winfo_height()
             ImageGrab.grab().crop((x1, y1, x2, y2)).save(directory)
+
+    def set_state(self, status):
+        if status:
+            for key in self.types:
+                self.types[key]["state"] = NORMAL
+        else:
+            for key in self.types:
+                self.types[key]["state"] = DISABLED
 
 
 # frame for containing tool settings
