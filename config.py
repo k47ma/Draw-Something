@@ -28,5 +28,6 @@ settings = {
     "SPRAY_SIZE": 1,
     "HOST": "",
     "PORT": 0,
-    "SOCKET": None
+    "SOCKET": None,
+    "TEXTAREA": None
 }

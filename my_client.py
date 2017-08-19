@@ -183,6 +183,11 @@ class ClientReceivingThread(threading.Thread):
                         self.last_draw = line
                     elif data["type"] == "set":
                         self.last_draw = None
+                    elif data["type"] == "message":
+                        textarea = settings["TEXTAREA"]
+                        message = data["data"]
+                        textarea.insert(END, message + "\n")
+                        textarea.see(END)
         except Exception:
             controller = settings["CONTROLLER"]
             controller.status.configure(text="Offline", fg="#FF8C00")
