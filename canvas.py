@@ -32,7 +32,7 @@ class PaintCanvas(Canvas):
     def startDraw(self, event):
         if self.firstClick:
             self.lastX, self.lastY = event.x, event.y
-            self.points.extend([event.x, event.y])
+            self.points = [event.x, event.y]
             self.firstClick = False
         if self.type == "text" and self.entry:
             self.entry.draw_text()
@@ -71,7 +71,7 @@ class PaintCanvas(Canvas):
                            "data": ((self.lastX, self.lastY, event.x, event.y),
                                     settings["COLOR"], settings["PENCIL_WIDTH"])}
                 socket.send(str(message))
-            except Exception:
+            except socket.error:
                 pass
 
         self.points.extend([event.x, event.y])
@@ -103,7 +103,7 @@ class PaintCanvas(Canvas):
                 message = {"type": "brush",
                            "data": (type, (self.lastX, self.lastY, event.x, event.y), color, r)}
                 socket.send(str(message))
-            except Exception:
+            except socket.error:
                 pass
 
         self.points.extend([event.x, event.y])
@@ -163,6 +163,9 @@ class PaintCanvas(Canvas):
         if self.action:
             self.delete(self.action[0])
 
+        width = settings["RECT_WIDTH"]
+        color = settings["COLOR"]
+
         if settings["TRANSPARENT"]:
             fill_color = ""
         else:
@@ -185,12 +188,25 @@ class PaintCanvas(Canvas):
             # draw square
             end_x = self.lastX + dir_x * side
             end_y = self.lastY + dir_y * side
-            rect = self.create_rectangle(self.lastX, self.lastY, end_x, end_y, width=settings["RECT_WIDTH"],
-                                         outline=settings["COLOR"], fill=fill_color)
+            rect = self.create_rectangle(self.lastX, self.lastY, end_x, end_y, width=width, outline=color,
+                                         fill=fill_color)
         else:
             # draw rectangle
-            rect = self.create_rectangle(self.lastX, self.lastY, event.x, event.y, width=settings["RECT_WIDTH"],
-                                         outline=settings["COLOR"], fill=fill_color)
+            end_x = event.x
+            end_y = event.y
+            rect = self.create_rectangle(self.lastX, self.lastY, end_x, end_y, width=width, outline=color,
+                                         fill=fill_color)
+
+        # send rectangle information
+        socket = settings["SOCKET"]
+        if socket:
+            try:
+                message = {"type": "rect",
+                           "data": ((self.lastX, self.lastY, end_x, end_y), width, color, fill_color)}
+                socket.send(str(message))
+            except socket.error:
+                pass
+
         self.action = [rect]
 
     def addCircle(self, event):
@@ -201,6 +217,8 @@ class PaintCanvas(Canvas):
             fill_color = ""
         else:
             fill_color = settings["FILL_COLOR"]
+        width = settings["CIRCLE_WIDTH"]
+        color = settings["COLOR"]
 
         if event.state == SHIFT:
             diameter = min(abs(self.lastX - event.x), abs(self.lastY - event.y))
@@ -219,12 +237,22 @@ class PaintCanvas(Canvas):
             # draw circle
             end_x = self.lastX + dir_x * diameter
             end_y = self.lastY + dir_y * diameter
-            oval = self.create_oval((self.lastX, self.lastY, end_x, end_y), width=settings["CIRCLE_WIDTH"],
-                                    outline=settings["COLOR"],
-                                    fill=fill_color)
+            oval = self.create_oval((self.lastX, self.lastY, end_x, end_y), width=width, outline=color, fill=fill_color)
         else:
-            oval = self.create_oval((self.lastX, self.lastY, event.x, event.y), width=settings["CIRCLE_WIDTH"],
-                                    outline=settings["COLOR"], fill=fill_color)
+            end_x = event.x
+            end_y = event.y
+            oval = self.create_oval((self.lastX, self.lastY, end_x, end_y), width=width, outline=color, fill=fill_color)
+
+        # send circle information
+        socket = settings["SOCKET"]
+        if socket:
+            try:
+                message = {"type": "circle",
+                           "data": ((self.lastX, self.lastY, end_x, end_y), width, color, fill_color)}
+                socket.send(str(message))
+            except socket.error:
+                pass
+
         self.action = [oval]
 
     def addDashRect(self, event):
@@ -257,11 +285,24 @@ class PaintCanvas(Canvas):
         self.action = [rect]
 
     def addSpray(self, event):
+        spray_size = settings["SPRAY_SIZE"]
         image = PhotoImage(file="image\\shaped_spray.gif")
-        zoomed_image = image.zoom(settings["SPRAY_SIZE"])
+        zoomed_image = image.zoom(spray_size)
         self.bitmaps.append(zoomed_image)
-        bmp = self.create_image((event.x, event.y), image=self.bitmaps[-1])
-        self.action.append(bmp)
+
+        spray = self.create_image((event.x, event.y), image=self.bitmaps[-1])
+
+        # send spray information
+        socket = settings["SOCKET"]
+        if socket:
+            try:
+                message = {"type": "spray",
+                           "data": ((event.x, event.y), spray_size)}
+                socket.send(str(message))
+            except socket.error:
+                pass
+
+        self.action.append(spray)
 
     def revert(self, event=None):
         try:
@@ -271,6 +312,16 @@ class PaintCanvas(Canvas):
 
         for action in last_action:
             self.delete(action)
+
+        # send revert command
+        socket = settings["SOCKET"]
+        if socket:
+            try:
+                message = {"type": "revert",
+                           "data": None}
+                socket.send(str(message))
+            except socket.error:
+                pass
 
     def setDraw(self, event=None):
         type = self.type
@@ -331,7 +382,7 @@ class PaintCanvas(Canvas):
             try:
                 message = {"type": "set", "data": None}
                 socket.send(str(message))
-            except Exception:
+            except socket.error:
                 pass
 
         self.firstClick = True
@@ -348,7 +399,7 @@ class PaintCanvas(Canvas):
                 message = {"type": "line",
                            "data": (coords, settings["COLOR"], settings["LINE_WIDTH"])}
                 socket.send(str(message))
-            except Exception:
+            except socket.error:
                 pass
 
     class PaintText(Text):
@@ -372,6 +423,7 @@ class PaintCanvas(Canvas):
 
         def draw_text(self, *args):
             background = None
+            background_info = None
 
             # draw the background of text
             if not settings["TRANSPARENT"]:
@@ -379,20 +431,12 @@ class PaintCanvas(Canvas):
                 y1 = self.y
                 x2 = x1 + self.width * 7
                 y2 = y1 + self.height * 15
+                background_coords = (x1, y1, x2, y2)
                 color = settings["COLOR"]
                 fill_color = settings["FILL_COLOR"]
 
-                background = self.canvas.create_rectangle((x1, y1, x2, y2), outline=color, fill=fill_color)
-
-                # send background information
-                socket = settings["SOCKET"]
-                if socket:
-                    try:
-                        message = {"type": "background",
-                                   "data": ((x1, y1, x2, y2), color, fill_color)}
-                        socket.send(str(message))
-                    except Exception:
-                        pass
+                background = self.canvas.create_rectangle(background_coords, outline=color, fill=fill_color)
+                background_info = (background_coords, color, fill_color)
 
             text = self.get(1.0, END)
             width = self.width * 7
@@ -405,10 +449,10 @@ class PaintCanvas(Canvas):
             socket = settings["SOCKET"]
             if socket:
                 try:
-                    message = {"type": "text",
-                               "data": (self.x + 3, self.y - 2, text, font, width, text_color)}
+                    message = {"type": "textarea",
+                               "data": ((self.x + 3, self.y - 2, text, font, width, text_color), background_info)}
                     socket.send(str(message))
-                except Exception:
+                except socket.error:
                     pass
 
             if not settings["TRANSPARENT"]:

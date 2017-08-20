@@ -33,7 +33,7 @@ class GameServer(object):
 
             while True:
                 client, addr = s.accept()
-                client_name = "Client" + str(ind)
+                client_name = "Player" + str(ind)
                 print client_name + " connected from: " + addr[0] + " - " + str(addr[1])
 
                 self.clients.append((client_name, client))
