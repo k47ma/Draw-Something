@@ -10,15 +10,11 @@ from ast import literal_eval
 # module for client side program
 
 
-class ClientSettingWindow(Toplevel):
+class ClientSettingFrame(Frame):
     def __init__(self, parent):
-        Toplevel.__init__(self, parent)
+        Frame.__init__(self, parent)
 
         self.parent = parent
-        self.wm_geometry("250x160+%d+%d" % (self.parent.winfo_rootx() + 50, self.parent.winfo_rooty() + 50))
-        self.title("Client Setting")
-        self.iconbitmap(r'image\paint.ico')
-        self.resizable(False, False)
 
         container = Frame(self)
         container.pack(side=TOP, padx=6, pady=(6, 0), fill=BOTH, expand=True)
@@ -40,68 +36,57 @@ class ClientSettingWindow(Toplevel):
         self.status = Label(self, font=("", 9), fg="red")
         self.status.pack(side=TOP)
 
-        self.connect_btn = Button(self, text="Create", command=self.create_connection)
+        self.connect_btn = Button(self, text="Connect", command=self.create_connection)
         self.connect_btn.pack(side=BOTTOM, ipadx=3, ipady=1, pady=(3, 6))
 
     def create_connection(self, event=None):
         host = self.host_name.get()
         if not host:
-            self.status["text"] = "Please enter a valid hostname!"
+            self.status["text"] = "Please enter a valid hostname! ^^"
             return
 
         port = self.port_number.get()
         if not port:
-            self.status["text"] = "Please enter a valid port number!"
+            self.status["text"] = "Please enter a valid port number! ^^"
             return
 
         try:
             port_number = int(port)
         except ValueError:
-            self.status["text"] = "Please enter a valid port number!"
+            self.status["text"] = "Please enter a valid port number! ^^"
             return
 
         settings["HOST"] = host
         settings["PORT"] = port_number
 
-        thread = ClientThread(self, host, port_number)
-        thread.daemon = True
-        thread.start()
-
-    def close_window(self):
-        self.destroy()
-
-
-# thread for new client connection
-class ClientThread(threading.Thread):
-    def __init__(self, parent, host, port):
-        threading.Thread.__init__(self)
-
-        self.parent = parent
-        self.host = host
-        self.port = port
-
-    def run(self):
-        self.parent.status.configure(text="Connecting...", fg="#228B22")
+        self.status.configure(text="Connecting...", fg="#228B22")
 
         try:
             self.setup_client()
-        except Exception:
-            self.parent.status.configure(
+        except socket.error:
+            self.status.configure(
                 text="Can't connect to the given host at given port.\nPlease check your input!", fg="red")
 
     def setup_client(self):
+        host = settings["HOST"]
+        port = settings["PORT"]
+
         s = socket.socket()
-        s.connect((self.host, self.port))
+        s.connect((host, port))
         settings["SOCKET"] = s
 
         controller = settings["CONTROLLER"]
-        controller.status.configure(text="Connected to:\n" + self.host + " - " + str(self.port), fg="#228B22")
-        self.parent.status.configure(text="Connected to:\n" + self.host + " - " + str(self.port), fg="#228B22")
-        self.parent.connect_btn["state"] = DISABLED
+        controller.status.configure(text="Connected to:\n" + host + " - " + str(port), fg="#228B22")
+        self.status.configure(text="Connected to:\n" + host + " - " + str(port), fg="#228B22")
+        self.connect_btn["state"] = DISABLED
 
         thread = ClientReceivingThread(s)
         thread.daemon = True
         thread.start()
+
+        self.parent.game_frame.lift()
+        self.parent.wm_geometry("900x680")
+        self.parent.controller.set_state(False)
 
 
 # thread for listening to messages from server
@@ -116,28 +101,6 @@ class ClientReceivingThread(threading.Thread):
         self.bitmaps = []
 
     def run(self):
-        # get the file size from server
-        data = self.connection.recv(1024)
-        fsize = int(data)
-
-        # generate a random file name
-        fname = "documents\\" + hex(random.randint(10e20, 10e21))[2:][:-1] + ".gif"
-        file = open(fname, 'wb')
-
-        # receive image from server
-        received_size = 0
-        while True:
-            data = self.connection.recv(512)
-            file.write(data)
-            received_size += 512
-            if received_size >= fsize:
-                break
-        file.close()
-
-        # update client canvas
-        self.image = PhotoImage(file=fname)
-        settings["CANVAS"].create_image((0, 0), image=self.image, anchor=NW)
-
         # listen to the server
         try:
             while True:

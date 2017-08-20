@@ -36,7 +36,9 @@ class GameServer(object):
                 client_name = "Player" + str(ind)
                 print client_name + " connected from: " + addr[0] + " - " + str(addr[1])
 
-                self.clients.append((client_name, client))
+                client_info = {"name": client_name, "socket": client, "ready": False}
+                self.clients.append(client_info)
+
                 client_thread = ClientHandlingThread(self, client, client_name)
                 client_thread.daemon = True
                 client_thread.start()
@@ -44,10 +46,10 @@ class GameServer(object):
                 ind += 1
 
     def send_message(self, message, name):
-        for client_name, client in self.clients:
-            if client_name != name:
+        for client_info in self.clients:
+            if client_info["name"] != name:
                 data = {"type": "message", "data": name + ": " + message}
-                client.send(str(data))
+                client_info["socket"].send(str(data))
 
 
 # thread for handling requests from each client
