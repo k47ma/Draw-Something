@@ -158,7 +158,7 @@ class ControlFrame(Frame):
 
         # send current mouse position to client or server
         socket = settings["SOCKET"]
-        if socket:
+        if socket and self.canvas.drawer:
             try:
                 message = {"type": "mouse", "data": (event.x, event.y)}
                 socket.send(str(message))
@@ -170,10 +170,17 @@ class ControlFrame(Frame):
         for key in self.types:
             self.types[key]["relief"] = RAISED
 
+        self.canvas.type = name
         self.types[name]["relief"] = SUNKEN
         self.setting_frame.show(name)
         self.canvas["cursor"] = self.cursors[name]
-        self.canvas.type = name
+
+    def deselect_all(self):
+        for key in self.types:
+            self.types[key]["relief"] = RAISED
+
+        self.canvas.type = ""
+        self.canvas["cursor"] = "@main.cur"
 
     def select_color(self):
         selected_color = tkColorChooser.askcolor(settings["COLOR"], parent=self, title="Select Outline Color")
@@ -220,9 +227,11 @@ class ControlFrame(Frame):
         if status:
             for key in self.types:
                 self.types[key]["state"] = NORMAL
+            self.canvas.drawer = True
         else:
             for key in self.types:
                 self.types[key]["state"] = DISABLED
+            self.canvas.drawer = False
 
 
 # frame for containing tool settings

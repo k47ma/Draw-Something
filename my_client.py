@@ -116,6 +116,7 @@ class ClientReceivingThread(threading.Thread):
                         continue
 
                     canvas = settings["CANVAS"]
+                    controller = settings["CONTROLLER"]
 
                     if data["type"] == "mouse":
                         # update mouse position
@@ -210,6 +211,18 @@ class ClientReceivingThread(threading.Thread):
                         message = data["data"]
                         textarea.insert(END, message + "\n")
                         textarea.see(END)
+                    elif data["type"] == "drawer":
+                        word = data["data"]
+                        canvas.update_word(word)
+                        canvas.drawer = True
+                        controller.set_state(True)
+                        controller.select("pencil")
+                    elif data["type"] == "guess":
+                        guess_word = data["data"].replace("*", u"\u25a1").replace(" ", "_")
+                        canvas.update_word(guess_word)
+                        canvas.drawer = False
+                        controller.set_state(False)
+                        controller.deselect_all()
         except socket.error:
             controller = settings["CONTROLLER"]
             controller.status.configure(text="Offline", fg="#FF8C00")

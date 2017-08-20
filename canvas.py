@@ -10,6 +10,7 @@ class PaintCanvas(Canvas):
 
         settings["CANVAS"] = self
         self.parent = parent
+        self.type = ""
         self.lastX = 0
         self.lastY = 0
         self.firstClick = True
@@ -19,6 +20,12 @@ class PaintCanvas(Canvas):
         self.entry = None
         self.controller = None
         self.bitmaps = []
+        self.drawer = False
+
+        word_frame = Frame(self, bg="white")
+        self.word_lbl = Label(word_frame, text="Word: ", font=("Arial", 12, "bold"))
+        self.word_lbl.pack(side=LEFT)
+        self.create_window(0, 0, anchor=NW, window=word_frame)
 
         # add ready button to canvas
         ready_frame = Frame(self, width=700, height=650, bg="white")
@@ -72,7 +79,7 @@ class PaintCanvas(Canvas):
 
         # send line information
         socket = settings["SOCKET"]
-        if socket:
+        if socket and self.drawer:
             try:
                 message = {"type": "pencil",
                            "data": ((self.lastX, self.lastY, event.x, event.y),
@@ -105,7 +112,7 @@ class PaintCanvas(Canvas):
 
         # send line information
         socket = settings["SOCKET"]
-        if socket:
+        if socket and self.drawer:
             try:
                 message = {"type": "brush",
                            "data": (type, (self.lastX, self.lastY, event.x, event.y), color, r)}
@@ -206,7 +213,7 @@ class PaintCanvas(Canvas):
 
         # send rectangle information
         socket = settings["SOCKET"]
-        if socket:
+        if socket and self.drawer:
             try:
                 message = {"type": "rect",
                            "data": ((self.lastX, self.lastY, end_x, end_y), width, color, fill_color)}
@@ -252,7 +259,7 @@ class PaintCanvas(Canvas):
 
         # send circle information
         socket = settings["SOCKET"]
-        if socket:
+        if socket and self.drawer:
             try:
                 message = {"type": "circle",
                            "data": ((self.lastX, self.lastY, end_x, end_y), width, color, fill_color)}
@@ -301,7 +308,7 @@ class PaintCanvas(Canvas):
 
         # send spray information
         socket = settings["SOCKET"]
-        if socket:
+        if socket and self.drawer:
             try:
                 message = {"type": "spray",
                            "data": ((event.x, event.y), spray_size)}
@@ -322,7 +329,7 @@ class PaintCanvas(Canvas):
 
         # send revert command
         socket = settings["SOCKET"]
-        if socket:
+        if socket and self.drawer:
             try:
                 message = {"type": "revert",
                            "data": None}
@@ -385,7 +392,7 @@ class PaintCanvas(Canvas):
 
         # send setDraw command
         socket = settings["SOCKET"]
-        if socket:
+        if socket and self.drawer:
             try:
                 message = {"type": "set", "data": None}
                 socket.send(str(message))
@@ -401,7 +408,7 @@ class PaintCanvas(Canvas):
     def sendLine(self, coords):
         # send line information
         socket = settings["SOCKET"]
-        if socket:
+        if socket and self.drawer:
             try:
                 message = {"type": "line",
                            "data": (coords, settings["COLOR"], settings["LINE_WIDTH"])}
@@ -422,6 +429,9 @@ class PaintCanvas(Canvas):
         textarea = settings["TEXTAREA"]
         textarea.insert(END, "READY!\n")
         self.delete(self.ready_window)
+
+    def update_word(self, word):
+        self.word_lbl["text"] = "Word: " + word
 
     class PaintText(Text):
         def __init__(self, canvas, x, y, width, height):
@@ -468,7 +478,7 @@ class PaintCanvas(Canvas):
 
             # send text information
             socket = settings["SOCKET"]
-            if socket:
+            if socket and self.drawer:
                 try:
                     message = {"type": "textarea",
                                "data": ((self.x + 3, self.y - 2, text, font, width, text_color), background_info)}
