@@ -20,6 +20,13 @@ class PaintCanvas(Canvas):
         self.controller = None
         self.bitmaps = []
 
+        # add ready button to canvas
+        ready_frame = Frame(self, width=700, height=650, bg="white")
+        ready_btn = Button(ready_frame, text="READY!", font=("Arial", 12, "bold"), command=self.ready)
+        ready_btn.pack(padx=6, pady=3)
+        ready_btn.place(x=200, y=300)
+        self.ready_window = self.create_window(0, 0, anchor=NW, window=ready_frame)
+
         self.bind("<Button-1>", self.startDraw)
         self.bind("<Motion>", self.printMousePosition)
         self.bind("<B1-Motion>", self.draw)
@@ -401,6 +408,20 @@ class PaintCanvas(Canvas):
                 socket.send(str(message))
             except socket.error:
                 pass
+
+    def ready(self):
+        # send server ready command
+        socket = settings["SOCKET"]
+        if socket:
+            try:
+                data = {"type": "ready",
+                        "data": None}
+                socket.send(str(data))
+            except socket.error:
+                return
+        textarea = settings["TEXTAREA"]
+        textarea.insert(END, "READY!\n")
+        self.delete(self.ready_window)
 
     class PaintText(Text):
         def __init__(self, canvas, x, y, width, height):
