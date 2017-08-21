@@ -127,6 +127,7 @@ class ClientReceivingThread(threading.Thread):
         self.last_draw = None
         self.history = []
         self.bitmaps = []
+        self.mouse = 0
 
     def run(self):
         # listen to the server
@@ -150,7 +151,7 @@ class ClientReceivingThread(threading.Thread):
                         # update mouse position
                         pos = data["data"]
                         cursor = PhotoImage(file="image\\cursor2.gif")
-                        canvas.create_image(pos, image=cursor, anchor=NW)
+                        self.mouse = canvas.create_image(pos, image=cursor, anchor=NW)
                     elif data["type"] == "pencil":
                         if not self.last_draw:
                             self.last_draw = []
@@ -252,8 +253,10 @@ class ClientReceivingThread(threading.Thread):
                         controller.deselect_all()
                     elif data["type"] == "finished":
                         self.clear_canvas()
+                        canvas.delete(self.mouse)
                     elif data["type"] == "clear":
                         self.clear_canvas()
+                        canvas.delete(self.mouse)
         except socket.error:
             controller = settings["CONTROLLER"]
             controller.status.configure(text="Offline", fg="#FF8C00")
