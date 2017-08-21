@@ -403,7 +403,13 @@ class PaintCanvas(Canvas):
         self.action = []
 
     def clear(self):
-        self.delete("all")
+        # clear all history
+        for action in self.history:
+            if type(action) is int:
+                self.delete(action)
+            else:
+                for act in action:
+                    self.delete(act)
 
     def sendLine(self, coords):
         # send line information

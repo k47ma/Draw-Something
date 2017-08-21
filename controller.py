@@ -91,9 +91,9 @@ class ControlFrame(Frame):
         self.cursors["spray"] = "@spray.cur"
 
         self.revert_img = PhotoImage(file="image\\revert.gif")
-        revert_btn = Button(tools_btn_frame, image=self.revert_img, command=self.canvas.revert)
-        revert_btn.grid(row=4, column=0, pady=6)
-        self.create_tooltip(revert_btn, "revert")
+        self.revert_btn = Button(tools_btn_frame, image=self.revert_img, command=self.canvas.revert)
+        self.revert_btn.grid(row=4, column=0, pady=6)
+        self.create_tooltip(self.revert_btn, "revert")
 
         # colors setting
         color_frame = LabelFrame(self, text="Colors")
@@ -142,9 +142,9 @@ class ControlFrame(Frame):
         self.transparency.grid(row=2, column=0, columnspan=3, pady=(5, 0))
 
         self.clear_img = PhotoImage(file="image\\cross.gif")
-        clear_btn = Button(self, image=self.clear_img, cursor="hand2", command=self.ask_clear)
-        clear_btn.pack(side=BOTTOM, pady=10)
-        self.create_tooltip(clear_btn, "clear all")
+        self.clear_btn = Button(self, image=self.clear_img, cursor="hand2", command=self.ask_clear)
+        self.clear_btn.pack(side=BOTTOM, pady=10)
+        self.create_tooltip(self.clear_btn, "clear all")
 
         self.position = Label(self, text="(0, 0)", font=("Arial", 8))
         self.position.pack(side=BOTTOM)
@@ -210,7 +210,17 @@ class ControlFrame(Frame):
     def ask_clear(self):
         clear = tkMessageBox.askyesno("Clear Canvas", "Are you sure you want to clear the canvas?", default="no")
         if clear:
+            # clear the canvas
             self.canvas.clear()
+
+            # send clear command to the server
+            socket = settings["SOCKET"]
+            if socket and self.canvas.drawer:
+                try:
+                    message = {"type": "clear", "data": None}
+                    socket.send(str(message))
+                except socket.error:
+                    pass
 
     def save(self):
         directory = tkFileDialog.asksaveasfilename(
@@ -227,11 +237,13 @@ class ControlFrame(Frame):
         if status:
             for key in self.types:
                 self.types[key]["state"] = NORMAL
-            self.canvas.drawer = True
+            self.clear_btn["state"] = NORMAL
+            self.revert_btn["state"] = NORMAL
         else:
             for key in self.types:
                 self.types[key]["state"] = DISABLED
-            self.canvas.drawer = False
+            self.clear_btn["state"] = DISABLED
+            self.revert_btn["state"] = DISABLED
 
 
 # frame for containing tool settings

@@ -149,6 +149,8 @@ class GameStatusManageThread(threading.Thread):
             clients = self.server.clients
             ind = 0
             while True:
+                self.server.send_message("Game started!")
+
                 # reset the player status
                 for client_info in clients:
                     client_info["win"] = False
@@ -164,6 +166,10 @@ class GameStatusManageThread(threading.Thread):
                 # check the game status
                 while not self.check_game_status():
                     time.sleep(0.2)
+
+                # send new round command to all players
+                data = {"type": "finished", "data": None}
+                self.server.broadcast_data(str(data))
 
                 self.server.send_message("-------------------------\nNew Round!")
 

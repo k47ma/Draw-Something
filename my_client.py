@@ -216,13 +216,31 @@ class ClientReceivingThread(threading.Thread):
                         canvas.update_word(word)
                         canvas.drawer = True
                         controller.set_state(True)
-                        controller.select("pencil")
                     elif data["type"] == "guess":
                         guess_word = data["data"].replace("*", u"\u25a1").replace(" ", "_")
                         canvas.update_word(guess_word)
                         canvas.drawer = False
                         controller.set_state(False)
                         controller.deselect_all()
+                    elif data["type"] == "finished":
+                        self.clear_canvas()
+                    elif data["type"] == "clear":
+                        self.clear_canvas()
         except socket.error:
             controller = settings["CONTROLLER"]
             controller.status.configure(text="Offline", fg="#FF8C00")
+
+    def clear_canvas(self):
+        canvas = settings["CANVAS"]
+        if canvas.drawer:
+            history = canvas.history
+        else:
+            history = self.history
+
+        # clear all history
+        for action in history:
+            if type(action) is int:
+                canvas.delete(action)
+            else:
+                for act in action:
+                    canvas.delete(act)
