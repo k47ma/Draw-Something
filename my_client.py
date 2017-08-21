@@ -256,7 +256,6 @@ class ClientReceivingThread(threading.Thread):
                         canvas.delete(self.mouse)
                     elif data["type"] == "clear":
                         self.clear_canvas()
-                        canvas.delete(self.mouse)
         except socket.error:
             controller = settings["CONTROLLER"]
             controller.status.configure(text="Offline", fg="#FF8C00")
