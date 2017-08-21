@@ -455,7 +455,7 @@ class PaintCanvas(Canvas):
 
             self.focus()
             self.bind("<FocusOut>", self.draw_text)
-            self.bind("<Key-Return>", self.draw_text)
+            self.bind("<Return>", self.draw_text)
             self.bind("<Control-Return>", lambda x: self.insert(INSERT, ""))
 
         def draw_text(self, *args):
@@ -484,7 +484,7 @@ class PaintCanvas(Canvas):
 
             # send text information
             socket = settings["SOCKET"]
-            if socket and self.drawer:
+            if socket and self.canvas.drawer:
                 try:
                     message = {"type": "textarea",
                                "data": ((self.x + 3, self.y - 2, text, font, width, text_color), background_info)}

@@ -137,6 +137,7 @@ class ClientReceivingThread(threading.Thread):
                 for data in re.findall("{.*?}", datas):
                     try:
                         data = literal_eval(data)
+                        print data
                     except ValueError:
                         continue
                     except TypeError:
@@ -147,115 +148,118 @@ class ClientReceivingThread(threading.Thread):
                     canvas = settings["CANVAS"]
                     controller = settings["CONTROLLER"]
 
-                    if data["type"] == "mouse":
-                        # update mouse position
-                        pos = data["data"]
-                        cursor = PhotoImage(file="image\\cursor2.gif")
-                        self.mouse = canvas.create_image(pos, image=cursor, anchor=NW)
-                    elif data["type"] == "pencil":
-                        if not self.last_draw:
-                            self.last_draw = []
-                        # add pencil line
-                        pos, color, width = data["data"]
-                        line = canvas.create_line(pos, fill=color, width=width, capstyle=ROUND, joinstyle=ROUND)
-                        self.last_draw.append(line)
-                        self.history.append(line)
-                    elif data["type"] == "brush":
-                        if not self.last_draw:
-                            self.last_draw = []
-                        # add brush line
-                        brush_type, pos, color, width = data["data"]
-                        if brush_type == "circle":
-                            brush = canvas.create_line(pos, fill=color, width=width, capstyle=ROUND, joinstyle=ROUND)
-                        else:
-                            brush = canvas.create_line(pos, fill=color, width=width, capstyle=PROJECTING, joinstyle=BEVEL)
-                        self.last_draw.append(brush)
-                        self.history.append(brush)
-                    elif data["type"] == "textarea":
-                        text_data = data["data"][0]
-                        background_data = data["data"][1]
-                        action = []
-                        if background_data:
-                            # add background for text
-                            coords, color, fill_color = background_data
-                            background = canvas.create_rectangle(coords, outline=color, fill=fill_color)
-                            action.append(background)
-                        # add text
-                        x, y, text, font, width, text_color = text_data
-                        text = canvas.create_text(x, y, text=text, anchor=NW, font=font, width=width, fill=text_color)
-                        action.append(text)
-                        self.history.append(action)
-                    elif data["type"] == "line":
-                        # clear last line
-                        if self.last_draw:
-                            canvas.delete(self.last_draw)
-                        # add new line
-                        coords, color, width = data["data"]
-                        line = canvas.create_line(coords, fill=color, width=width, capstyle=ROUND)
-                        self.last_draw = line
-                    elif data["type"] == "set":
-                        if self.last_draw:
-                            self.history.append(self.last_draw)
-                        self.last_draw = None
-                    elif data["type"] == "rect":
-                        # clear last rectangle
-                        if self.last_draw:
-                            canvas.delete(self.last_draw)
-                        # add new rectangle
-                        coords, width, color, fill_color = data["data"]
-                        rect = canvas.create_rectangle(coords, width=width, outline=color, fill=fill_color)
-                        self.last_draw = rect
-                    elif data["type"] == "circle":
-                        # clear last circle
-                        if self.last_draw:
-                            canvas.delete(self.last_draw)
-                        # add new circle
-                        coords, width, color, fill_color = data["data"]
-                        circle = canvas.create_oval(coords, width=width, outline=color, fill=fill_color)
-                        self.last_draw = circle
-                    elif data["type"] == "spray":
-                        if not self.last_draw:
-                            self.last_draw = []
-                        # add spray
-                        coords, spray_size = data["data"]
-                        image = PhotoImage(file="image\\shaped_spray.gif")
-                        zoomed_image = image.zoom(spray_size)
-                        self.bitmaps.append(zoomed_image)
-                        spray = canvas.create_image(coords, image=self.bitmaps[-1])
-                        self.last_draw.append(spray)
-                    elif data["type"] == "revert":
-                        # get the last action
-                        try:
-                            last_action = self.history.pop()
-                        except IndexError:
-                            continue
-                        # delete last action from canvas
-                        if type(last_action) is int:
-                            canvas.delete(last_action)
-                        else:
-                            for action in last_action:
-                                canvas.delete(action)
-                    elif data["type"] == "message":
-                        textarea = settings["TEXTAREA"]
-                        message = data["data"]
-                        textarea.insert(END, message + "\n")
-                        textarea.see(END)
-                    elif data["type"] == "drawer":
-                        word = data["data"]
-                        canvas.update_word(word)
-                        canvas.drawer = True
-                        controller.set_state(True)
-                    elif data["type"] == "guess":
-                        guess_word = data["data"].replace("*", u"\u25a1").replace(" ", "_")
-                        canvas.update_word(guess_word)
-                        canvas.drawer = False
-                        controller.set_state(False)
-                        controller.deselect_all()
-                    elif data["type"] == "finished":
-                        self.clear_canvas()
-                        canvas.delete(self.mouse)
-                    elif data["type"] == "clear":
-                        self.clear_canvas()
+                    try:
+                        if data["type"] == "mouse":
+                            # update mouse position
+                            pos = data["data"]
+                            cursor = PhotoImage(file="image\\cursor2.gif")
+                            self.mouse = canvas.create_image(pos, image=cursor, anchor=NW)
+                        elif data["type"] == "pencil":
+                            if not self.last_draw:
+                                self.last_draw = []
+                            # add pencil line
+                            pos, color, width = data["data"]
+                            line = canvas.create_line(pos, fill=color, width=width, capstyle=ROUND, joinstyle=ROUND)
+                            self.last_draw.append(line)
+                            self.history.append(line)
+                        elif data["type"] == "brush":
+                            if not self.last_draw:
+                                self.last_draw = []
+                            # add brush line
+                            brush_type, pos, color, width = data["data"]
+                            if brush_type == "circle":
+                                brush = canvas.create_line(pos, fill=color, width=width, capstyle=ROUND, joinstyle=ROUND)
+                            else:
+                                brush = canvas.create_line(pos, fill=color, width=width, capstyle=PROJECTING, joinstyle=BEVEL)
+                            self.last_draw.append(brush)
+                            self.history.append(brush)
+                        elif data["type"] == "textarea":
+                            text_data = data["data"][0]
+                            background_data = data["data"][1]
+                            action = []
+                            if background_data:
+                                # add background for text
+                                coords, color, fill_color = background_data
+                                background = canvas.create_rectangle(coords, outline=color, fill=fill_color)
+                                action.append(background)
+                            # add text
+                            x, y, text, font, width, text_color = text_data
+                            text = canvas.create_text(x, y, text=text, anchor=NW, font=font, width=width, fill=text_color)
+                            action.append(text)
+                            self.history.append(action)
+                        elif data["type"] == "line":
+                            # clear last line
+                            if self.last_draw:
+                                canvas.delete(self.last_draw)
+                            # add new line
+                            coords, color, width = data["data"]
+                            line = canvas.create_line(coords, fill=color, width=width, capstyle=ROUND)
+                            self.last_draw = line
+                        elif data["type"] == "set":
+                            if self.last_draw:
+                                self.history.append(self.last_draw)
+                            self.last_draw = None
+                        elif data["type"] == "rect":
+                            # clear last rectangle
+                            if self.last_draw:
+                                canvas.delete(self.last_draw)
+                            # add new rectangle
+                            coords, width, color, fill_color = data["data"]
+                            rect = canvas.create_rectangle(coords, width=width, outline=color, fill=fill_color)
+                            self.last_draw = rect
+                        elif data["type"] == "circle":
+                            # clear last circle
+                            if self.last_draw:
+                                canvas.delete(self.last_draw)
+                            # add new circle
+                            coords, width, color, fill_color = data["data"]
+                            circle = canvas.create_oval(coords, width=width, outline=color, fill=fill_color)
+                            self.last_draw = circle
+                        elif data["type"] == "spray":
+                            if not self.last_draw:
+                                self.last_draw = []
+                            # add spray
+                            coords, spray_size = data["data"]
+                            image = PhotoImage(file="image\\shaped_spray.gif")
+                            zoomed_image = image.zoom(spray_size)
+                            self.bitmaps.append(zoomed_image)
+                            spray = canvas.create_image(coords, image=self.bitmaps[-1])
+                            self.last_draw.append(spray)
+                        elif data["type"] == "revert":
+                            # get the last action
+                            try:
+                                last_action = self.history.pop()
+                            except IndexError:
+                                continue
+                            # delete last action from canvas
+                            if type(last_action) is int:
+                                canvas.delete(last_action)
+                            else:
+                                for action in last_action:
+                                    canvas.delete(action)
+                        elif data["type"] == "message":
+                            textarea = settings["TEXTAREA"]
+                            message = data["data"]
+                            textarea.insert(END, message + "\n")
+                            textarea.see(END)
+                        elif data["type"] == "drawer":
+                            word = data["data"]
+                            canvas.update_word(word)
+                            canvas.drawer = True
+                            controller.set_state(True)
+                        elif data["type"] == "guess":
+                            guess_word = data["data"].replace("*", u"\u25a1").replace(" ", "_")
+                            canvas.update_word(guess_word)
+                            canvas.drawer = False
+                            controller.set_state(False)
+                            controller.deselect_all()
+                        elif data["type"] == "finished":
+                            self.clear_canvas()
+                            canvas.delete(self.mouse)
+                        elif data["type"] == "clear":
+                            self.clear_canvas()
+                    except Exception:
+                        continue
         except socket.error:
             controller = settings["CONTROLLER"]
             controller.status.configure(text="Offline", fg="#FF8C00")

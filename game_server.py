@@ -137,14 +137,23 @@ class ClientDataHandlingThread(threading.Thread):
     def run(self):
         while True:
             try:
-                data = self.client.recv(1024)
-                data = literal_eval(data)
-                if data["type"] == "message":
-                    self.server.send_message(data["data"], self.client_name)
-                elif data["type"] == "ready":
-                    self.server.player_ready(self.client_name)
-                else:
-                    self.server.broadcast_data(data, self.client_name)
+                datas = self.client.recv(1024)
+                for data in re.findall("{.*?}", datas):
+                    try:
+                        data = literal_eval(data)
+                    except ValueError:
+                        continue
+                    except TypeError:
+                        continue
+                    except SyntaxError:
+                        continue
+
+                    if data["type"] == "message":
+                        self.server.send_message(data["data"], self.client_name)
+                    elif data["type"] == "ready":
+                        self.server.player_ready(self.client_name)
+                    else:
+                        self.server.broadcast_data(data, self.client_name)
             except socket.error:
                 print self.client_name + " disconnected."
                 self.server.remove_player(self.client_name)
@@ -178,11 +187,17 @@ class GameStatusManageThread(threading.Thread):
                     client_info["win"] = False
 
                 # generate a random word
-                word = self.get_word()
+                try:
+                    word = self.get_word()
+                except IndexError:
+                    word = self.get_word()
                 self.server.word = word
 
                 # send drawer information to all players
-                drawer = clients[ind]["name"]
+                try:
+                    drawer = clients[ind]["name"]
+                except IndexError:
+                    break
                 self.assign_drawer(drawer, word)
 
                 # check the game status
