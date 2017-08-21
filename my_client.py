@@ -25,13 +25,20 @@ class ClientSettingFrame(Frame):
         lbl2 = Label(container, text="Port Number: ")
         lbl2.grid(row=1, column=0, padx=10, pady=5, sticky=E)
 
+        lbl3 = Label(container, text="Name: ")
+        lbl3.grid(row=2, column=0, padx=10, pady=(5, 0), sticky=E)
+
         self.host_name = Entry(container)
-        self.host_name.grid(row=0, column=1, sticky=E + W)
+        self.host_name.grid(row=0, column=1, sticky=E+W)
         self.host_name.bind("<Return>", self.create_connection)
 
         self.port_number = Entry(container)
-        self.port_number.grid(row=1, column=1, sticky=E + W)
+        self.port_number.grid(row=1, column=1, sticky=E+W)
         self.port_number.bind("<Return>", self.create_connection)
+
+        self.name_entry = Entry(container)
+        self.name_entry.grid(row=2, column=1, sticky=E+W)
+        self.name_entry.bind("<Return>", self.create_connection)
 
         self.status = Label(self, font=("", 9), fg="red")
         self.status.pack(side=TOP)
@@ -50,10 +57,18 @@ class ClientSettingFrame(Frame):
             self.status["text"] = "Please enter a valid port number! ^^"
             return
 
+        name = self.name_entry.get()
+        if not name:
+            self.status["text"] = "Please enter a name! ^^"
+            return
+
+        self.connect_btn["state"] = DISABLED
+
         try:
             port_number = int(port)
         except ValueError:
             self.status["text"] = "Please enter a valid port number! ^^"
+            self.connect_btn["state"] = NORMAL
             return
 
         settings["HOST"] = host
@@ -62,12 +77,15 @@ class ClientSettingFrame(Frame):
         self.status.configure(text="Connecting...", fg="#228B22")
 
         try:
-            self.setup_client()
+            if not self.setup_client(name):
+                self.status.configure(text="This name has been used. Please choose another name!", fg="red")
+                self.connect_btn["state"] = NORMAL
         except socket.error:
             self.status.configure(
                 text="Can't connect to the given host at given port.\nPlease check your input!", fg="red")
+            self.connect_btn["state"] = NORMAL
 
-    def setup_client(self):
+    def setup_client(self, name):
         host = settings["HOST"]
         port = settings["PORT"]
 
@@ -75,10 +93,18 @@ class ClientSettingFrame(Frame):
         s.connect((host, port))
         settings["SOCKET"] = s
 
+        # register player at server
+        data = {"type": "register", "data": name}
+        self.status.configure(text="Registering player at server...", fg="blue")
+        s.send(str(data))
+        result = s.recv(1024)
+        result = literal_eval(result)
+        if not result["data"]:
+            return False
+
         controller = settings["CONTROLLER"]
         controller.status.configure(text="Connected to:\n" + host + " - " + str(port), fg="#228B22")
         self.status.configure(text="Connected to:\n" + host + " - " + str(port), fg="#228B22")
-        self.connect_btn["state"] = DISABLED
 
         thread = ClientReceivingThread(s)
         thread.daemon = True
@@ -87,6 +113,8 @@ class ClientSettingFrame(Frame):
         self.parent.game_frame.lift()
         self.parent.wm_geometry("900x680")
         self.parent.controller.set_state(False)
+
+        return True
 
 
 # thread for listening to messages from server

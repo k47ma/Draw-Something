@@ -14,8 +14,8 @@ class Game(Tk):
 
         self.iconbitmap(r'image\paint.ico')
         self.wm_title("Draw Something")
-        self.geometry("300x150+0+0")
-        self.minsize(300, 150)
+        self.geometry("300x170+0+0")
+        self.minsize(300, 170)
         #self.protocol("WM_DELETE_WINDOW", self.ask_quit)
         self["cursor"] = "@main.cur"
 

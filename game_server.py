@@ -44,8 +44,24 @@ class GameServer(object):
 
             while True:
                 client, addr = s.accept()
-                client_name = "Player" + str(ind)
-                print client_name + " connected from: " + addr[0] + " - " + str(addr[1])
+                print "New player connected from: " + addr[0] + " - " + str(addr[1])
+
+                # register player
+                data = client.recv(1024)
+                data = literal_eval(data)
+                client_name = data["data"]
+                print "registering player..."
+                if self.check_name(client_name):
+                    # send successful result to the player
+                    result = {"type": "register", "data": True}
+                    client.send(str(result))
+                    print client_name + " registered!"
+                else:
+                    # send failed result to the player
+                    result = {"type": "register", "data": False}
+                    client.send(str(result))
+                    print "Registration failed! Name(" + client_name + ") has been used."
+                    continue
 
                 client_info = {"name": client_name, "socket": client, "ready": False, "win": False}
                 self.clients.append(client_info)
@@ -56,6 +72,12 @@ class GameServer(object):
                 client_thread.start()
 
                 ind += 1
+
+    def check_name(self, name):
+        for client_info in self.clients:
+            if client_info["name"] == name:
+                return False
+        return True
 
     def send_message(self, message, name=None):
         if name:
