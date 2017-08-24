@@ -143,15 +143,23 @@ class PaintCanvas(Canvas):
         self.addBrushLine(event, True)
 
     def addLine(self, event):
+        dash = settings["DASH"]
+        dash_width = settings["DASH_WIDTH"]
+
         if self.action:
             self.delete(self.action[0])
 
         if event.state == SHIFT:
             # avoid "divided by 0" error
             if event.x == self.lastX:
-                line = self.create_line((self.lastX, self.lastY, self.lastX, event.y),
-                                        fill=settings["COLOR"], width=settings["LINE_WIDTH"],
-                                        capstyle=ROUND)
+                if dash:
+                    line = self.create_line((self.lastX, self.lastY, self.lastX, event.y),
+                                            fill=settings["COLOR"], width=settings["LINE_WIDTH"],
+                                            capstyle=ROUND, dash=(dash_width,))
+                else:
+                    line = self.create_line((self.lastX, self.lastY, self.lastX, event.y),
+                                            fill=settings["COLOR"], width=settings["LINE_WIDTH"],
+                                            capstyle=ROUND)
                 self.sendLine((self.lastX, self.lastY, self.lastX, event.y))
                 self.action = [line]
                 return
@@ -160,30 +168,52 @@ class PaintCanvas(Canvas):
 
             # calculate the endpoint of line
             if slope >= tan(radians(67.5)) or slope < tan(radians(112.5)):
-                line = self.create_line((self.lastX, self.lastY, self.lastX, event.y),
-                                        fill=settings["COLOR"], width=settings["LINE_WIDTH"],
-                                        capstyle=ROUND)
+                if dash:
+                    line = self.create_line((self.lastX, self.lastY, self.lastX, event.y),
+                                            fill=settings["COLOR"], width=settings["LINE_WIDTH"],
+                                            capstyle=ROUND, dash=(dash_width,))
+                else:
+                    line = self.create_line((self.lastX, self.lastY, self.lastX, event.y),
+                                            fill=settings["COLOR"], width=settings["LINE_WIDTH"],
+                                            capstyle=ROUND)
                 self.sendLine((self.lastX, self.lastY, self.lastX, event.y))
             elif tan(radians(-22.5)) <= slope < tan(radians(22.5)):
-                line = self.create_line((self.lastX, self.lastY, event.x, self.lastY),
-                                        fill=settings["COLOR"], width=settings["LINE_WIDTH"],
-                                        capstyle=ROUND)
+                if dash:
+                    line = self.create_line((self.lastX, self.lastY, event.x, self.lastY),
+                                            fill=settings["COLOR"], width=settings["LINE_WIDTH"],
+                                            capstyle=ROUND, dash=(dash_width,))
+                else:
+                    line = self.create_line((self.lastX, self.lastY, event.x, self.lastY),
+                                            fill=settings["COLOR"], width=settings["LINE_WIDTH"],
+                                            capstyle=ROUND)
                 self.sendLine((self.lastX, self.lastY, event.x, self.lastY))
             elif tan(radians(22.5)) <= slope < tan(radians(67.5)):
                 end_x = int(round((self.lastX + event.x - self.lastY + event.y) / 2))
                 end_y = int(round((event.x - self.lastX + event.y + self.lastY) / 2))
-                line = self.create_line((self.lastX, self.lastY, end_x, end_y), fill=settings["COLOR"],
-                                        width=settings["LINE_WIDTH"], capstyle=ROUND)
+                if dash:
+                    line = self.create_line((self.lastX, self.lastY, end_x, end_y), fill=settings["COLOR"],
+                                            width=settings["LINE_WIDTH"], capstyle=ROUND, dash=(dash_width,))
+                else:
+                    line = self.create_line((self.lastX, self.lastY, end_x, end_y), fill=settings["COLOR"],
+                                            width=settings["LINE_WIDTH"], capstyle=ROUND)
                 self.sendLine((self.lastX, self.lastY, end_x, end_y))
             else:
                 end_x = int(round((self.lastX + event.x + self.lastY - event.y) / 2))
                 end_y = int(round((self.lastX - event.x + self.lastY + event.y) / 2))
-                line = self.create_line((self.lastX, self.lastY, end_x, end_y), fill=settings["COLOR"],
-                                        width=settings["LINE_WIDTH"], capstyle=ROUND)
+                if dash:
+                    line = self.create_line((self.lastX, self.lastY, end_x, end_y), fill=settings["COLOR"],
+                                            width=settings["LINE_WIDTH"], capstyle=ROUND, dash=(dash_width,))
+                else:
+                    line = self.create_line((self.lastX, self.lastY, end_x, end_y), fill=settings["COLOR"],
+                                            width=settings["LINE_WIDTH"], capstyle=ROUND)
                 self.sendLine((self.lastX, self.lastY, end_x, end_y))
         else:
-            line = self.create_line((self.lastX, self.lastY, event.x, event.y), fill=settings["COLOR"],
-                                    width=settings["LINE_WIDTH"], capstyle=ROUND)
+            if dash:
+                line = self.create_line((self.lastX, self.lastY, event.x, event.y), fill=settings["COLOR"],
+                                        width=settings["LINE_WIDTH"], capstyle=ROUND, dash=(dash_width,))
+            else:
+                line = self.create_line((self.lastX, self.lastY, event.x, event.y), fill=settings["COLOR"],
+                                        width=settings["LINE_WIDTH"], capstyle=ROUND)
             self.sendLine((self.lastX, self.lastY, event.x, event.y))
         self.action = [line]
 
@@ -426,12 +456,15 @@ class PaintCanvas(Canvas):
                     self.delete(act)
 
     def sendLine(self, coords):
+        dash = settings["DASH"]
+        dash_width = settings["DASH_WIDTH"]
+
         # send line information
         socket = settings["SOCKET"]
-        if socket and self.drawer:
+        if socket:
             try:
                 message = {"type": "line",
-                           "data": (coords, settings["COLOR"], settings["LINE_WIDTH"])}
+                           "data": (coords, settings["COLOR"], settings["LINE_WIDTH"], dash, dash_width)}
                 socket.send(str(message))
             except socket.error:
                 pass

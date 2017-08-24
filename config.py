@@ -14,6 +14,8 @@ settings = {
     "ERASER_WIDTH": 20.0,
     "ERASER_MODE": "circle",
     "LINE_WIDTH": 1.0,
+    "DASH": False,
+    "DASH_WIDTH": 5,
     "RECT_WIDTH": 1.0,
     "CIRCLE_WIDTH": 1.0,
     "FILL_COLOR": "#ffffff",

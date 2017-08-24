@@ -209,8 +209,12 @@ class ClientReceivingThread(threading.Thread):
                             if self.last_draw:
                                 canvas.delete(self.last_draw)
                             # add new line
-                            coords, color, width = data["data"]
-                            line = canvas.create_line(coords, fill=color, width=width, capstyle=ROUND)
+                            coords, color, width, dash, dash_width = data["data"]
+                            if dash:
+                                line = canvas.create_line(coords, fill=color, width=width, capstyle=ROUND,
+                                                          dash=(dash_width,))
+                            else:
+                                line = canvas.create_line(coords, fill=color, width=width, capstyle=ROUND)
                             self.last_draw = line
                         elif data["type"] == "set":
                             if self.draw_info:

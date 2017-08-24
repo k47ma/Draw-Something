@@ -394,8 +394,31 @@ class SettingFrame(LabelFrame):
             self.line_width.set(settings["LINE_WIDTH"])
             self.line_width.pack(side=TOP)
 
+            label2 = Label(self, text="Dash Width")
+            label2.pack(side=TOP, pady=(6, 0))
+
+            self.dash_width = Scale(self, from_=1, to=5, resolution=1, sliderlength=25, orient=HORIZONTAL,
+                                    command=self.set_dash_width)
+            self.dash_width.set(settings["DASH_WIDTH"])
+            self.dash_width.pack(side=TOP)
+
+            self.dash_var = IntVar()
+            self.dash_var.set(settings["DASH"])
+            dash_box = Checkbutton(self, text="Dash Line", variable=self.dash_var, command=self.set_dash)
+            dash_box.pack(side=TOP, pady=3)
+
         def set_line_width(self, event):
             settings["LINE_WIDTH"] = self.line_width.get()
+
+        def set_dash(self, event=None):
+            dash = self.dash_var.get()
+            if dash:
+                settings["DASH"] = True
+            else:
+                settings["DASH"] = False
+
+        def set_dash_width(self, event=None):
+            settings["DASH_WIDTH"] = self.dash_width.get()
 
     class RectFrame(Frame):
         def __init__(self, parent):
