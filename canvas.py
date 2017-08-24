@@ -1,3 +1,4 @@
+from __future__ import division
 from tkinter import *
 from config import *
 from math import *
@@ -142,7 +143,7 @@ class PaintCanvas(Canvas):
                 self.action = [line]
                 return
 
-            slope = float((event.y - self.lastY) / (event.x - self.lastX))
+            slope = (event.y - self.lastY) / (event.x - self.lastX)
 
             # calculate the endpoint of line
             if slope >= tan(radians(67.5)) or slope < tan(radians(112.5)):
