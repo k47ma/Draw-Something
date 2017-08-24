@@ -392,7 +392,7 @@ class PaintCanvas(Canvas):
             width = abs(x1 - x2)
             height = abs(y1 - y2)
 
-            char_width = int(width // 7)
+            char_width = int(width // 6)
             char_height = int(height // 15)
 
             if char_width < 10:
@@ -516,9 +516,9 @@ class PaintCanvas(Canvas):
             if not settings["TRANSPARENT"]:
                 x1 = self.x
                 y1 = self.y
-                x2 = x1 + self.width * 7
+                x2 = x1 + self.width * 6
                 y2 = y1 + self.height * 15
-                background_coords = (x1, y1, x2, y2)
+                background_coords = (x1, y1, x2, y2+3)
                 color = settings["COLOR"]
                 fill_color = settings["FILL_COLOR"]
 
@@ -526,10 +526,10 @@ class PaintCanvas(Canvas):
                 background_info = (background_coords, color, fill_color)
 
             text = self.get(1.0, END)
-            width = self.width * 7
+            width = self.width * 6
             text_color = settings["TEXT_COLOR"]
             font = self.get_font()
-            draw = self.canvas.create_text(self.x + 3, self.y - 2, text=text, anchor=NW, font=font, width=width,
+            draw = self.canvas.create_text(self.x + 3, self.y, text=text, anchor=NW, font=font, width=width,
                                            fill=text_color)
 
             # send text information
