@@ -398,6 +398,9 @@ class PaintCanvas(Canvas):
             if char_width < 10:
                 char_width = 10
 
+            if char_height == 0:
+                char_height = 1
+
             self.delete(self.action[0])
 
             paint_text = self.PaintText(self, x1, y1, char_width, char_height)

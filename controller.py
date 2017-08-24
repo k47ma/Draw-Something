@@ -132,7 +132,7 @@ class ControlFrame(Frame):
         font_color_frame.grid(row=1, column=2)
 
         self.text_color_btn = Button(font_color_frame, bg=settings["TEXT_COLOR"], bd=2, relief=GROOVE,
-                                activebackground=settings["TEXT_COLOR"], command=self.select_text_color)
+                                     activebackground=settings["TEXT_COLOR"], command=self.select_text_color)
         self.text_color_btn.pack(side=TOP, fill=BOTH, expand=True)
 
         self.transparency_var = IntVar()
