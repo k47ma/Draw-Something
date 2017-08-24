@@ -127,6 +127,8 @@ class ClientReceivingThread(threading.Thread):
         self.last_draw = None
         self.history = []
         self.bitmaps = []
+        self.points = []
+        self.draw_info = None
         self.mouse = 0
 
     def run(self):
@@ -137,7 +139,6 @@ class ClientReceivingThread(threading.Thread):
                 for data in re.findall("{.*?}", datas):
                     try:
                         data = literal_eval(data)
-                        print data
                     except ValueError:
                         continue
                     except TypeError:
@@ -157,22 +158,38 @@ class ClientReceivingThread(threading.Thread):
                         elif data["type"] == "pencil":
                             if not self.last_draw:
                                 self.last_draw = []
-                            # add pencil line
+
+                            # read line info
                             pos, color, width = data["data"]
+
+                            # record line info
+                            self.draw_info = ("pencil", color, width)
+                            self.points.extend([pos[2], pos[3]])
+
+                            # add the pencil line
                             line = canvas.create_line(pos, fill=color, width=width, capstyle=ROUND, joinstyle=ROUND)
+
+                            # record it in history
                             self.last_draw.append(line)
-                            self.history.append(line)
                         elif data["type"] == "brush":
                             if not self.last_draw:
                                 self.last_draw = []
-                            # add brush line
+
+                            # read brush info
                             brush_type, pos, color, width = data["data"]
+
+                            # record brush info
+                            self.draw_info = ("brush", brush_type, color, width)
+                            self.points.extend([pos[2], pos[3]])
+
+                            # add brush line
                             if brush_type == "circle":
                                 brush = canvas.create_line(pos, fill=color, width=width, capstyle=ROUND, joinstyle=ROUND)
                             else:
                                 brush = canvas.create_line(pos, fill=color, width=width, capstyle=PROJECTING, joinstyle=BEVEL)
+
+                            # record it in history
                             self.last_draw.append(brush)
-                            self.history.append(brush)
                         elif data["type"] == "textarea":
                             text_data = data["data"][0]
                             background_data = data["data"][1]
@@ -196,9 +213,41 @@ class ClientReceivingThread(threading.Thread):
                             line = canvas.create_line(coords, fill=color, width=width, capstyle=ROUND)
                             self.last_draw = line
                         elif data["type"] == "set":
+                            if self.draw_info:
+                                if self.draw_info[0] == "pencil":
+                                    color = self.draw_info[1]
+                                    width = self.draw_info[2]
+
+                                    # draw a new optimized line
+                                    new_line = canvas.create_line(tuple(self.points), fill=color, width=width, capstyle=ROUND,
+                                                                  joinstyle=ROUND, smooth=True)
+
+                                    # reset the history
+                                    self.clear_action(self.last_draw)
+                                    self.last_draw = new_line
+                                elif self.draw_info[0] == "brush":
+                                    brush_type = self.draw_info[1]
+                                    color = self.draw_info[2]
+                                    width = self.draw_info[3]
+
+                                    # draw a new optimized brush line
+                                    if brush_type == "circle":
+                                        new_brush = canvas.create_line(tuple(self.points), fill=color, width=width,
+                                                                       capstyle=ROUND, joinstyle=ROUND, smooth=True)
+                                    else:
+                                        new_brush = canvas.create_line(tuple(self.points), fill=color, width=width,
+                                                                       capstyle=PROJECTING, joinstyle=BEVEL, smooth=True)
+
+                                    # reset the history
+                                    self.clear_action(self.last_draw)
+                                    self.last_draw = new_brush
+
                             if self.last_draw:
                                 self.history.append(self.last_draw)
+
+                            self.points = []
                             self.last_draw = None
+                            self.draw_info = None
                         elif data["type"] == "rect":
                             # clear last rectangle
                             if self.last_draw:
@@ -231,12 +280,9 @@ class ClientReceivingThread(threading.Thread):
                                 last_action = self.history.pop()
                             except IndexError:
                                 continue
+
                             # delete last action from canvas
-                            if type(last_action) is int:
-                                canvas.delete(last_action)
-                            else:
-                                for action in last_action:
-                                    canvas.delete(action)
+                            self.clear_action(last_action)
                         elif data["type"] == "message":
                             textarea = settings["TEXTAREA"]
                             message = data["data"]
@@ -278,3 +324,13 @@ class ClientReceivingThread(threading.Thread):
             else:
                 for act in action:
                     canvas.delete(act)
+
+    def clear_action(self, action):
+        canvas = settings["CANVAS"]
+
+        # clear all action
+        if type(action) is int:
+            canvas.delete(action)
+        else:
+            for act in action:
+                canvas.delete(act)

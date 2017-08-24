@@ -96,27 +96,40 @@ class PaintCanvas(Canvas):
 
     def addBrushLine(self, event, eraser_mode=False):
         type = settings["BRUSH_MODE"]
-        r = settings["BRUSH_WIDTH"]
+        width = settings["BRUSH_WIDTH"]
         color = settings["COLOR"]
 
         if eraser_mode:
             type = settings["ERASER_MODE"]
-            r = settings["ERASER_WIDTH"]
+            width = settings["ERASER_WIDTH"]
             color = "white"
 
+        # add start point
+        if not self.action:
+            r = width / 2
+            if type == "circle":
+                start_point = self.create_oval((self.lastX - r, self.lastY - r, self.lastX + r, self.lastY + r),
+                                               fill=color, outline=color)
+
+            else:
+                start_point = self.create_rectangle((self.lastX - r, self.lastY - r, self.lastX + r, self.lastY + r),
+                                                    fill=color, outline=color)
+            self.action.append(start_point)
+
+        # add brush line
         if type == "circle":
             line = self.create_line((self.lastX, self.lastY, event.x, event.y), fill=color,
-                                    width=r, capstyle=ROUND, joinstyle=ROUND)
+                                    width=width, capstyle=ROUND, joinstyle=ROUND)
         else:
             line = self.create_line((self.lastX, self.lastY, event.x, event.y), fill=color,
-                                    width=r, capstyle=PROJECTING, joinstyle=BEVEL)
+                                    width=width, capstyle=PROJECTING, joinstyle=BEVEL)
 
         # send line information
         socket = settings["SOCKET"]
         if socket and self.drawer:
             try:
                 message = {"type": "brush",
-                           "data": (type, (self.lastX, self.lastY, event.x, event.y), color, r)}
+                           "data": (type, (self.lastX, self.lastY, event.x, event.y), color, width)}
                 socket.send(str(message))
             except socket.error:
                 pass
@@ -372,7 +385,7 @@ class PaintCanvas(Canvas):
             self.history.append([line])
         elif type == "brush":
             # clear brush lines
-            for action in self.action:
+            for action in self.action[1:]:
                 self.delete(action)
 
             # draw a single smooth brush line
@@ -387,7 +400,7 @@ class PaintCanvas(Canvas):
                                         joinstyle=BEVEL, smooth=True)
 
             self.points = []
-            self.history.append([line])
+            self.history.append([self.action[0], line])
         else:
             self.history.append(self.action)
 
