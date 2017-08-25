@@ -35,10 +35,10 @@ class Game(Tk):
         self.chatting.pack(side=RIGHT, fill=Y)
 
         self.canvas = PaintCanvas(self.game_frame)
-        self.canvas.pack(side=RIGHT, fill=BOTH, expand=True)
+        self.canvas.pack(side=RIGHT, fill=BOTH, expand=True, padx=5, pady=5)
 
         self.controller = ControlFrame(self.game_frame, self.canvas)
-        self.controller.pack(side=LEFT, fill=Y)
+        self.controller.pack(side=LEFT, fill=Y, padx=6, pady=5)
 
         start_btn = Button(self.start_frame, text="Start", command=self.connect)
         start_btn.pack()
