@@ -20,6 +20,7 @@ class ControlFrame(Frame):
         self.types = {}
         self.cursors = {}
         self.pack_propagate(False)
+        self.shift_image = PhotoImage(file="image\\up.gif")
         settings["CONTROLLER"] = self
 
         # frame for showing the connection status
@@ -146,7 +147,7 @@ class ControlFrame(Frame):
         self.clear_btn.pack(side=BOTTOM, pady=10)
         self.create_tooltip(self.clear_btn, "clear all")
 
-        self.position = Label(self, text="(0, 0)", font=("Arial", 8))
+        self.position = Label(self, text="(0, 0)", font=("Arial", 8), compound=RIGHT)
         self.position.pack(side=BOTTOM)
 
         # settings for specific tool
@@ -155,6 +156,10 @@ class ControlFrame(Frame):
 
     def printMousePosition(self, event):
         self.position["text"] = "(%d, %d)" % (event.x, event.y)
+        if event.state == SHIFT or event.state == 9:
+            self.position["image"] = self.shift_image
+        else:
+            self.position["image"] = ""
 
         # send current mouse position to client or server
         socket = settings["SOCKET"]
