@@ -236,7 +236,7 @@ class GameStatusManageThread(threading.Thread):
     def get_word():
         file = open('medium.txt', 'r')
         words = file.readlines()
-        ind = random.randint(0, len(words))
+        ind = random.randint(0, len(words) - 1)
         return words[ind].strip()
 
     def assign_drawer(self, drawer_name, word):
